@@ -31,7 +31,7 @@ public class TemperatureController {
 	@GET
 	@Path("/getLast")
 	@Produces(MediaType.APPLICATION_JSON)
-	public TemperatureRegister GetHistoric() {
+	public TemperatureRegister getLast() {
 		TemperatureRegister a = m_mongoConnector.GetLast();
 		System.out.println(
 				a.getTemperature() + "" + a.getRegisterTime() + " " + a.getHardwareId() + " " + a.getSensorId());
@@ -41,8 +41,9 @@ public class TemperatureController {
 	@POST
 	@Produces(MediaType.APPLICATION_JSON)
 	public String addTest() {
+		
+		System.out.println("inserindo ai");
 		m_mongoConnector.InsertFirst();
-		System.out.println("CARALHO");
 		return "{\"aaa veiPost works!!\":\"olar\"}";
 	}
 	
