@@ -1,17 +1,23 @@
 package Valhalla.midgardServer.database;
 
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 
 import org.bson.Document;
+import org.bson.conversions.Bson;
 
+import com.mongodb.BasicDBObject;
 import com.mongodb.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
+
+import Valhalla.midgardServer.model.TemperatureRegister;
 
 public class DatabaseConnector {
 	private MongoClient m_client;
 	private MongoDatabase m_database;
 	private MongoCollection<Document> m_collection;
-	public int x;
+
 	private String m_databaseName;
 	private String m_collectionName;
 
@@ -22,29 +28,35 @@ public class DatabaseConnector {
 	}
 
 	public void Connect() {
-//		 MongoClient mongoClient = new MongoClient(new
-//		 MongoClientURI(mongodblocalhost27017));
-//		 MongoClient mongoClient = new MongoClient();
-//		 MongoDatabase database = mongoClient.getDatabase(bunitaoDB);
-//		 MongoCollectionDocument collection =
-//		 database.getCollection(tester);
-//		 collection.insertOne(new Document(hi, 100));
-
-		m_client = new MongoClient();
+		// MongoCredential credential =
+		// MongoCredential.createCredential(userName, database, password);
+		// MongoClient mongoClient = new MongoClient(new ServerAddress(),
+		// Arrays.asList(credential));
+		m_client = new MongoClient("localhost", 27017);
 		m_database = m_client.getDatabase(m_databaseName);
 		m_collection = m_database.getCollection(m_collectionName);
-		x=1;
 	}
 
 	public void Disconnect() {
 		m_client.close();
 	}
 
-	public void InsertOne(Document p_toInsert) {
+	public void InsertFirst() {
 		Connect();
-		m_collection.insertOne(new Document("hi", x));
-		this.x=this.x+1;
+		TemperatureRegister v_toRegister = new TemperatureRegister(OffsetDateTime.now(ZoneOffset.UTC), (float) 23.6, 1,
+				1);
+		m_collection.insertOne(new Document(v_toRegister.toDocument()));
 		Disconnect();
+	}
+
+	public TemperatureRegister InsertOne(TemperatureRegister p_toInsert) {
+		Connect();
+		System.out.println("conected");
+		if (p_toInsert.getRegisterTime() == null)
+			p_toInsert.setRegisterTime(OffsetDateTime.now(ZoneOffset.UTC));
+		m_collection.insertOne(new Document(p_toInsert.toDocument()));
+		Disconnect();
+		return p_toInsert;
 	}
 
 	public void InsertMany() {
@@ -56,10 +68,45 @@ public class DatabaseConnector {
 	public void UpdateOne() {
 	}
 
-	public void GetOne() {
+	public long Count() {
+		Connect();
+		long v_count = m_collection.count();
+		Disconnect();
+		return v_count;
 	}
 
-	public void GetAll() {
+	public TemperatureRegister GetFirst() {
+
+		Connect();
+		Document myDoc = m_collection.find().first();
+		TemperatureRegister v_return = new TemperatureRegister(OffsetDateTime.parse(myDoc.getString("RegisterTime")),
+				myDoc.getDouble("Temperature"), myDoc.getInteger("Hardware"), myDoc.getInteger("Sensor"));
+		Disconnect();
+		return v_return;
+	}
+	public TemperatureRegister GetLast() {
+
+		Connect();
+
+		Document myDoc = (Document) m_collection.find().sort(new BasicDBObject("RegisterTime",-1)).first();
+		TemperatureRegister v_return = new TemperatureRegister(OffsetDateTime.parse(myDoc.getString("RegisterTime")),
+				myDoc.getDouble("Temperature"), myDoc.getInteger("Hardware"), myDoc.getInteger("Sensor"));
+		Disconnect();
+		return v_return;
+	}
+
+	public String GetAll() {
+		Connect();
+		System.out.println(m_collection.count() + "Documents");
+
+		Document myDoc = m_collection.find().first();
+		System.out.println(myDoc.toJson());
+
+		// Gson gson = new Gson();
+		// TemperatureRegister person = gson.fromJson(json,
+		// TemperatureRegister.class);
+		Disconnect();
+		return myDoc.toJson();
 	}
 
 	public String getDatabaseName() {

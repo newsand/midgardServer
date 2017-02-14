@@ -1,27 +1,59 @@
 package Valhalla.midgardServer.api;
 
-
-
+import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-/**
- * Root resource (exposed at "myresource" path)
- */
+import Valhalla.midgardServer.database.DatabaseConnector;
+import Valhalla.midgardServer.model.TemperatureRegister;
+
 @Path("temperature")
 public class TemperatureController {
 
-    /**
-     * Method handling HTTP GET requests. The returned object will be sent
-     * to the client as "text/plain" media type.
-     *
-     * @return String that will be returned as a text/plain response.
-     */
-    @GET
-    @Produces(MediaType.TEXT_PLAIN)
-    public String getIt() {
-        return "Got tempe!";
-    }
+	public DatabaseConnector m_mongoConnector = new DatabaseConnector("bunitaoDB", "tester");
+
+	@GET
+	@Produces(MediaType.TEXT_PLAIN)
+	public String getIt() {
+		return "GOOD SHIAAT!!";
+	}
+
+	@GET
+	@Path("/count")
+	@Produces(MediaType.TEXT_PLAIN)
+	public long Count() {
+		return m_mongoConnector.Count();
+	}
+
+	@GET
+	@Path("/getLast")
+	@Produces(MediaType.APPLICATION_JSON)
+	public TemperatureRegister GetHistoric() {
+		TemperatureRegister a = m_mongoConnector.GetLast();
+		System.out.println(
+				a.getTemperature() + "" + a.getRegisterTime() + " " + a.getHardwareId() + " " + a.getSensorId());
+		return a;
+	}
+
+	@POST
+	@Produces(MediaType.APPLICATION_JSON)
+	public String addTest() {
+		m_mongoConnector.InsertFirst();
+		System.out.println("CARALHO");
+		return "{\"aaa veiPost works!!\":\"olar\"}";
+	}
+	
+	@POST
+	@Path("/insert")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public TemperatureRegister addOne(TemperatureRegister p_register) {
+		System.out.println("to add");
+		System.out.println(p_register.toString());
+		TemperatureRegister v_register = m_mongoConnector.InsertOne(p_register);
+		return v_register;
+	}
 }
